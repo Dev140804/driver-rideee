@@ -8,11 +8,6 @@ const mapContainerStyle = {
   height: '400px',
 };
 
-const center = {
-  lat: 20.5937,
-  lng: 78.9629,
-};
-
 export default function Home() {
   const [username, setUsername] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);

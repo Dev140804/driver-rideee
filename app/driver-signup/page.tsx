@@ -4,17 +4,28 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function DriverSignup() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    username: string;
+    password: string;
+  }>({
     name: '',
     email: '',
     phone: '',
     username: '',
     password: '',
   });
+
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
   };
 
   const handleSignup = () => {
@@ -34,17 +45,20 @@ export default function DriverSignup() {
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
       <div className="bg-gray-800 p-8 rounded-xl shadow-md w-full max-w-sm">
         <h2 className="text-2xl font-bold mb-6 text-center">Driver Sign Up</h2>
-        {['name', 'email', 'phone', 'username', 'password'].map((field) => (
+
+        {/* ✅ Fix: Replace `any` with exact key access */}
+        {(['name', 'email', 'phone', 'username', 'password'] as const).map((field) => (
           <input
             key={field}
             name={field}
             type={field === 'password' ? 'password' : 'text'}
             placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-            value={(form as any)[field]}
+            value={form[field]}
             onChange={handleChange}
             className="w-full p-2 mb-3 rounded bg-gray-700"
           />
         ))}
+
         <button
           onClick={handleSignup}
           className="w-full bg-green-600 hover:bg-green-700 p-2 rounded font-semibold"

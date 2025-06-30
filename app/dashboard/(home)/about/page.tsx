@@ -3,19 +3,34 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// ✅ Define a type for the driver
+type Driver = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
 export default function About() {
-  const [driver, setDriver] = useState<any>(null);
+  const [driver, setDriver] = useState<Driver | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const data = localStorage.getItem('driver-user');
-    if (data) setDriver(JSON.parse(data));
+    if (data) {
+      try {
+        const parsed: Driver = JSON.parse(data);
+        setDriver(parsed);
+      } catch (error) {
+        console.error('Failed to parse driver-user from localStorage', error);
+      }
+    }
   }, []);
 
+  // ✅ Proper typing for logout button click
   const handleLogout = () => {
-    localStorage.removeItem('driver-session');
-    router.push('/driver-login');
-  };
+  localStorage.removeItem('driver-session');
+  router.push('/driver-login');
+};
 
   return (
     <div className="p-4 text-white bg-gray-900 h-full">

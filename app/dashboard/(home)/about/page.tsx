@@ -29,7 +29,7 @@ export default function About() {
   // ✅ Proper typing for logout button click
   const handleLogout = () => {
   localStorage.removeItem('driver-session');
-  router.push('/driver-login');
+  router.push('/login');
 };
 
   return (

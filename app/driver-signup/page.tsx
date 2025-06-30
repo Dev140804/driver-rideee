@@ -38,7 +38,7 @@ export default function DriverSignup() {
 
     localStorage.setItem('driver-user', JSON.stringify(form));
     alert('Signup successful! Please login.');
-    router.push('/driver-login');
+    router.push('/login');
   };
 
   return (
@@ -69,7 +69,7 @@ export default function DriverSignup() {
         <p className="mt-4 text-center text-sm">
           Already have an account?{' '}
           <span
-            onClick={() => router.push('/driver-login')}
+            onClick={() => router.push('/login')}
             className="text-blue-400 cursor-pointer hover:underline"
           >
             Sign In

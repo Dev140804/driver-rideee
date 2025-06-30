@@ -10,7 +10,7 @@ export default function WelcomeScreen() {
   useEffect(() => {
     const sessionUser = localStorage.getItem('driver-session');
     if (!sessionUser) {
-      router.push('/driver-login');
+      router.push('/login');
     } else {
       setUsername(sessionUser);
       setTimeout(() => {

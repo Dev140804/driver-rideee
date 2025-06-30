@@ -7,7 +7,7 @@ export default function HomePageRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/driver-login'); // ✅ Must match your route exactly
+    router.replace('/login'); // changed from /driver-login
   }, [router]);
 
   return null;

@@ -1,3 +1,4 @@
+'use client';
 export default function Rides() {
   return (
     <div className="p-4 text-white bg-gray-900 h-full">

@@ -1,30 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function WelcomeScreen() {
+export default function Welcome() {
+  const { data: session, status } = useSession();
   const router = useRouter();
-  const [username, setUsername] = useState('');
 
   useEffect(() => {
-    const sessionUser = localStorage.getItem('driver-session');
-    if (!sessionUser) {
+    if (status === "unauthenticated") {
       router.push('/login');
-    } else {
-      setUsername(sessionUser);
+    } else if (status === "authenticated") {
       setTimeout(() => {
         router.push('/dashboard/home');
-      }, 2500); // wait 2.5 seconds before going to dashboard
+      }, 2500); // Delay to show welcome animation
     }
-  }, [router]);
+  }, [status, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-black text-white">
       <div className="text-center animate-fadeIn">
         <h1 className="text-4xl font-bold mb-2">Welcome,</h1>
-        <h2 className="text-3xl font-semibold text-blue-400">{username}</h2>
+        <h2 className="text-3xl font-semibold text-blue-400">
+          {session?.user?.name || 'Driver'}
+        </h2>
       </div>
+
       <style jsx>{`
         .animate-fadeIn {
           animation: fadeIn 1.5s ease-in-out;

@@ -1,18 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import type { ConfirmationResult } from 'firebase/auth';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { firebaseApp } from '@/lib/firebase';
 import Image from 'next/image';
-
-declare global {
-  interface Window {
-    recaptchaVerifier?: RecaptchaVerifier;
-  }
-}
 
 // Type for driver user
 type DriverUser = {
@@ -32,21 +23,8 @@ export default function DriverSignup() {
     password: '',
   });
 
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
-  const auth = getAuth(firebaseApp);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {},
-      });
-    }
-  }, [auth]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -91,39 +69,15 @@ export default function DriverSignup() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const sendOtp = async () => {
+  const handleSignup = () => {
     if (!validate()) return;
 
-    const fullPhone = '+91' + form.phone;
-    try {
-      const result = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
-      setConfirmationResult(result);
-      setOtpSent(true);
-      alert('OTP sent to your phone.');
-    } catch (err) {
-      alert('Failed to send OTP');
-      console.error(err);
-    }
-  };
-
-  const verifyOtp = async () => {
-    if (!otp || !confirmationResult) {
-      alert('Please enter the OTP');
-      return;
-    }
-
-    try {
-      await confirmationResult.confirm(otp);
-      const existingUsers = JSON.parse(localStorage.getItem('driver-users') || '[]');
-      const updatedUsers = [...existingUsers, form];
-      localStorage.setItem('driver-users', JSON.stringify(updatedUsers));
-      localStorage.setItem('driver-user', JSON.stringify(form));
-      alert('Signup successful! Redirecting...');
-      router.push('/welcome');
-    } catch (err) {
-      alert('Invalid OTP');
-      console.error(err);
-    }
+    const existingUsers = JSON.parse(localStorage.getItem('driver-users') || '[]');
+    const updatedUsers = [...existingUsers, form];
+    localStorage.setItem('driver-users', JSON.stringify(updatedUsers));
+    localStorage.setItem('driver-user', JSON.stringify(form));
+    alert('Signup successful! Redirecting...');
+    router.push('/welcome');
   };
 
   return (
@@ -154,32 +108,12 @@ export default function DriverSignup() {
             </div>
           ))}
 
-          {!otpSent ? (
-            <button
-              onClick={sendOtp}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
-            >
-              Send OTP
-            </button>
-          ) : (
-            <>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
-                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              />
-              <button
-                onClick={verifyOtp}
-                className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-semibold transition"
-              >
-                Verify OTP & Sign Up
-              </button>
-            </>
-          )}
-
-          <div id="recaptcha-container"></div>
+          <button
+            onClick={handleSignup}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
+          >
+            Sign Up
+          </button>
 
           <div className="flex items-center gap-2 my-4">
             <div className="flex-grow h-px bg-gray-700" />

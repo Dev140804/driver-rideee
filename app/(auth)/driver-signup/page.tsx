@@ -3,11 +3,28 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import type { ConfirmationResult } from 'firebase/auth';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { app } from '@/lib/firebase'; // make sure this path is correct
+import { firebaseApp } from '@/lib/firebase';
+import Image from 'next/image';
+
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
+}
+
+// Type for driver user
+type DriverUser = {
+  name: string;
+  email: string;
+  phone: string;
+  username: string;
+  password: string;
+};
 
 export default function DriverSignup() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<DriverUser>({
     name: '',
     email: '',
     phone: '',
@@ -17,10 +34,10 @@ export default function DriverSignup() {
 
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
-  const auth = getAuth(app);
+  const auth = getAuth(firebaseApp);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
@@ -65,7 +82,7 @@ export default function DriverSignup() {
     }
 
     const existingUsers = JSON.parse(localStorage.getItem('driver-users') || '[]');
-    const usernameExists = existingUsers.some((user: any) => user.username === username);
+    const usernameExists = (existingUsers as DriverUser[]).some((user) => user.username === username);
     if (usernameExists) {
       newErrors.username = 'Username already exists';
     }
@@ -174,7 +191,7 @@ export default function DriverSignup() {
             onClick={() => signIn('google')}
             className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
           >
-            <img src="/google.svg" alt="Google" className="w-5 h-5" />
+            <Image src="/google.svg" alt="Google" width={20} height={20} />
             Sign Up with Google
           </button>
 

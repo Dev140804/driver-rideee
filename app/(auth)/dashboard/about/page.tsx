@@ -3,9 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image';
 
 export default function AboutPage() {
-  const [user, setUser] = useState<{ name?: string; email?: string; phone?: string; image?: string } | null>(null);
+  const [user, setUser] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+    image?: string;
+  } | null>(null);
+
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -39,10 +46,12 @@ export default function AboutPage() {
       <div className="max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-6 space-y-6">
         <div className="flex items-center gap-4">
           {user.image ? (
-            <img
+            <Image
               src={user.image}
               alt="Profile"
-              className="w-16 h-16 rounded-full border-2 border-indigo-500"
+              width={64}
+              height={64}
+              className="rounded-full border-2 border-indigo-500"
             />
           ) : (
             <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center text-xl font-bold border-2 border-indigo-500">

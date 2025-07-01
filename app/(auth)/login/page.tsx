@@ -18,13 +18,31 @@ export default function DriverLogin() {
   };
 
   const handleLogin = () => {
-    const user = JSON.parse(localStorage.getItem('driver-user') || '{}');
+    const localUsers = JSON.parse(localStorage.getItem("driver-users") || "[]");
 
-    if (form.username === user.username && form.password === user.password) {
-      alert('Login successful!');
-      router.push('/welcome');
+    const matchedUser = localUsers.find(
+      (user) => user.username === form.username && user.password === form.password
+    );
+
+    const isDemo = form.username === "driver" && form.password === "1234";
+
+    if (isDemo || matchedUser) {
+      const demoUser = isDemo
+        ? {
+            name: "Demo Driver",
+            email: "driver@example.com",
+            phone: "9876543210",
+            image: "",
+          }
+        : matchedUser;
+
+      localStorage.setItem("driver-user", JSON.stringify(demoUser));
+      alert("Login successful!");
+      setTimeout(() => {
+        window.location.href = "/welcome";
+      }, 100);
     } else {
-      alert('Invalid credentials');
+      alert("Invalid credentials");
     }
   };
 

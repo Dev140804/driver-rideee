@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { app } from '@/lib/firebase'; // make sure this path is correct
 
 export default function DriverSignup() {
   const [form, setForm] = useState({
@@ -13,22 +15,98 @@ export default function DriverSignup() {
     password: '',
   });
 
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const auth = getAuth(app);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {},
+      });
+    }
+  }, [auth]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const handleSignup = () => {
-    if (!form.name || !form.email || !form.phone || !form.username || !form.password) {
-      alert('Please fill all fields');
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    const { name, email, phone, username, password } = form;
+
+    if (!name.trim()) newErrors.name = 'Name is required';
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) {
+      newErrors.email = 'Email must be a valid @gmail.com address';
+    }
+
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(phone)) {
+      newErrors.phone = 'Phone number must be 10 digits';
+    }
+
+    if (!username.trim()) {
+      newErrors.username = 'Username is required';
+    }
+
+    if (!password.trim()) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+
+    const existingUsers = JSON.parse(localStorage.getItem('driver-users') || '[]');
+    const usernameExists = existingUsers.some((user: any) => user.username === username);
+    if (usernameExists) {
+      newErrors.username = 'Username already exists';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const sendOtp = async () => {
+    if (!validate()) return;
+
+    const fullPhone = '+91' + form.phone;
+    try {
+      const result = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
+      setConfirmationResult(result);
+      setOtpSent(true);
+      alert('OTP sent to your phone.');
+    } catch (err) {
+      alert('Failed to send OTP');
+      console.error(err);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (!otp || !confirmationResult) {
+      alert('Please enter the OTP');
       return;
     }
 
-    localStorage.setItem('driver-user', JSON.stringify(form));
-    alert('Signup successful! Please login.');
-    router.push('/login');
+    try {
+      await confirmationResult.confirm(otp);
+      const existingUsers = JSON.parse(localStorage.getItem('driver-users') || '[]');
+      const updatedUsers = [...existingUsers, form];
+      localStorage.setItem('driver-users', JSON.stringify(updatedUsers));
+      localStorage.setItem('driver-user', JSON.stringify(form));
+      alert('Signup successful! Redirecting...');
+      router.push('/welcome');
+    } catch (err) {
+      alert('Invalid OTP');
+      console.error(err);
+    }
   };
 
   return (
@@ -37,50 +115,54 @@ export default function DriverSignup() {
         <h2 className="text-3xl font-semibold text-center mb-6">Driver Sign Up</h2>
 
         <div className="space-y-4">
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Full Name"
-            className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <input
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email (Gmail)"
-            className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <input
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            placeholder="Phone Number"
-            className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <input
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-            placeholder="Username"
-            className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <input
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Password"
-            className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          {['name', 'email', 'phone', 'username', 'password'].map((field) => (
+            <div key={field}>
+              <input
+                name={field}
+                type={field === 'password' ? 'password' : 'text'}
+                value={form[field as keyof typeof form]}
+                onChange={handleChange}
+                placeholder={
+                  field === 'phone'
+                    ? 'Phone Number (10 digits)'
+                    : field === 'email'
+                    ? 'Email (e.g., name@gmail.com)'
+                    : field === 'password'
+                    ? 'Password (min 8 characters)'
+                    : field.charAt(0).toUpperCase() + field.slice(1)
+                }
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {errors[field] && <p className="text-red-400 text-sm mt-1">{errors[field]}</p>}
+            </div>
+          ))}
 
-          <button
-            onClick={handleSignup}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
-          >
-            Sign Up
-          </button>
+          {!otpSent ? (
+            <button
+              onClick={sendOtp}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
+            >
+              Send OTP
+            </button>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter OTP"
+                className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              />
+              <button
+                onClick={verifyOtp}
+                className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-semibold transition"
+              >
+                Verify OTP & Sign Up
+              </button>
+            </>
+          )}
+
+          <div id="recaptcha-container"></div>
 
           <div className="flex items-center gap-2 my-4">
             <div className="flex-grow h-px bg-gray-700" />

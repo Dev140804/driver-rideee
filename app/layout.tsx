@@ -1,4 +1,3 @@
-// ❌ DO NOT add 'use client'
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -25,6 +24,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* ✅ Add Google Maps JS API script here */}
+        <script
+          src={`https://maps.googleapis.com/maps/api/js?key=AIzaSyDck4v-JXt6PRQUOwFs7i3e-i_26HXbpkw`}
+          async
+          defer
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>

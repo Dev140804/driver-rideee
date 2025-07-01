@@ -1,39 +1,78 @@
 'use client';
 
-import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signOut, useSession } from 'next-auth/react';
 
 export default function AboutPage() {
-  const { data: session, status } = useSession();
+  const [user, setUser] = useState<{ name?: string; email?: string; phone?: string; image?: string } | null>(null);
+  const router = useRouter();
+  const { data: session } = useSession();
 
-  if (status === 'loading') {
-    return <p className="text-white p-4">Loading...</p>;
-  }
+  useEffect(() => {
+    if (session?.user) {
+      setUser(session.user); // Google login
+    } else {
+      const localUser = localStorage.getItem('driver-user');
+      if (localUser) {
+        setUser(JSON.parse(localUser)); // Demo or manual login
+      }
+    }
+  }, [session]);
 
-  if (status === 'unauthenticated') {
-    return <p className="text-white p-4">Not logged in.</p>;
-  }
-
-  const user = session?.user as {
-    name?: string;
-    email?: string;
-    image?: string;
-    phone?: string;
+  const handleLogout = async () => {
+    localStorage.removeItem('driver-user');
+    await signOut({ redirect: false });
+    router.push('/login');
   };
 
-  return (
-    <div className="bg-gray-950 min-h-screen text-white flex justify-center items-start pt-20 px-4">
-      <div className="bg-gray-900 p-6 rounded-xl w-full max-w-md shadow-xl">
-        <h1 className="text-2xl font-bold mb-4 text-center">Driver Profile</h1>
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <p>You are not logged in.</p>
+      </div>
+    );
+  }
 
-        <div className="space-y-3 text-sm">
-          <p><span className="text-gray-400">👤 Name:</span> <span className="text-white">{user.name || "N/A"}</span></p>
-          <p><span className="text-gray-400">📧 Email:</span> <span className="text-white">{user.email || "N/A"}</span></p>
-          <p><span className="text-gray-400">📱 Phone:</span> <span className="text-white">{user.phone || "Not available"}</span></p>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 py-8">
+      <div className="max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          {user.image ? (
+            <img
+              src={user.image}
+              alt="Profile"
+              className="w-16 h-16 rounded-full border-2 border-indigo-500"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center text-xl font-bold border-2 border-indigo-500">
+              {user.name?.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <h2 className="text-2xl font-semibold">{user.name || 'Driver'}</h2>
+            <p className="text-sm text-gray-400">{user.email || 'N/A'}</p>
+          </div>
+        </div>
+
+        <div className="space-y-2 text-sm">
+          <p>
+            <span className="font-semibold text-gray-300">Full Name:</span>{' '}
+            {user.name || 'N/A'}
+          </p>
+          <p>
+            <span className="font-semibold text-gray-300">Email:</span>{' '}
+            {user.email || 'N/A'}
+          </p>
+          <p>
+            <span className="font-semibold text-gray-300">Phone:</span>{' '}
+            {user.phone || 'Not available'}
+          </p>
         </div>
 
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="mt-6 w-full bg-red-600 hover:bg-red-700 py-2 rounded font-semibold"
+          onClick={handleLogout}
+          className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg font-semibold transition"
         >
           Logout
         </button>

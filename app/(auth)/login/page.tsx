@@ -76,7 +76,7 @@ export default function DriverLogin() {
           </button>
 
           <p className="text-sm text-center mt-4 text-gray-400">
-            Don't have an account?{' '}
+            Don&rsquo;t have an account?{' '}
             <span
               onClick={() => router.push('/driver-signup')}
               className="text-indigo-400 hover:underline cursor-pointer"

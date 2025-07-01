@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ account, profile }) {
+    async signIn() {
       // You can add filtering logic here if needed
       return true;
     },
@@ -48,7 +48,9 @@ export const authOptions: NextAuthOptions = {
         const phone = data?.phoneNumbers?.[0]?.value ?? null;
 
         if (session.user && phone) {
-          (session.user as any).phone = phone; // Workaround if no type extension
+          if (session.user && typeof session.user === 'object') {
+  (session.user as { phone?: string }).phone = phone;
+} // Workaround if no type extension
         }
       } catch (error) {
         console.error("❌ Failed to fetch phone number from People API:", error);

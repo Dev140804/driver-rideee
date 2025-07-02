@@ -1,31 +1,36 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useUser } from '@clerk/nextjs';
 import { useEffect, useRef, useState } from 'react';
 
 export default function DriverHome() {
-  const { data: session } = useSession();
+  const { user: clerkUser } = useUser();
 
-  const [user, setUser] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
+  const [user, setUser] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+  } | null>(null);
+
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (session?.user) {
-      // Case: Google login
+    if (clerkUser) {
+      // Case: Signed in via Clerk (Google or Clerk UI)
       setUser({
-        name: session.user.name || 'Google User',
-        email: session.user.email || '',
-        phone: '', // optionally load with People API if enabled
+        name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`,
+        email: clerkUser.emailAddresses[0]?.emailAddress,
+        phone: clerkUser.phoneNumbers[0]?.phoneNumber || '',
       });
     } else {
-      // Case: demo login or manual signup
+      // Case: demo login or manual signup (localStorage)
       const localUser = localStorage.getItem('driver-user');
       if (localUser) {
         setUser(JSON.parse(localUser));
       }
     }
-  }, [session]);
+  }, [clerkUser]);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -56,7 +61,9 @@ export default function DriverHome() {
     }
   }, [location]);
 
-  if (!user) return <div className="text-white p-6 text-center">You are not logged in.</div>;
+  if (!user) {
+    return <div className="text-white p-6 text-center">You are not logged in.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 text-white p-6">
@@ -71,6 +78,13 @@ export default function DriverHome() {
             ref={mapRef}
             className="w-full h-[400px] rounded-lg border border-gray-700 shadow-inner"
           />
+        </div>
+
+        <div className="bg-gray-800 rounded-2xl p-4 shadow-xl">
+          <h2 className="text-lg font-semibold mb-2">👤 Your Details</h2>
+          <p><strong>Name:</strong> {user.name || 'N/A'}</p>
+          <p><strong>Email:</strong> {user.email || 'N/A'}</p>
+          <p><strong>Phone:</strong> {user.phone || 'N/A'}</p>
         </div>
       </div>
     </div>

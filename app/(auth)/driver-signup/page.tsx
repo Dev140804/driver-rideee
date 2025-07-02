@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { SignUpButton } from '@clerk/nextjs';
 import Image from 'next/image';
 
-// Type for driver user
 type DriverUser = {
   name: string;
   email: string;
@@ -40,7 +39,7 @@ export default function DriverSignup() {
     if (!email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) {
-      newErrors.email = 'Email must be a valid @gmail.com address';
+      newErrors.email = 'Must be a valid Gmail address';
     }
 
     if (!phone.trim()) {
@@ -60,7 +59,9 @@ export default function DriverSignup() {
     }
 
     const existingUsers = JSON.parse(localStorage.getItem('driver-users') || '[]');
-    const usernameExists = (existingUsers as DriverUser[]).some((user) => user.username === username);
+    const usernameExists = (existingUsers as DriverUser[]).some(
+      (user) => user.username === username
+    );
     if (usernameExists) {
       newErrors.username = 'Username already exists';
     }
@@ -91,7 +92,7 @@ export default function DriverSignup() {
               <input
                 name={field}
                 type={field === 'password' ? 'password' : 'text'}
-                value={form[field as keyof typeof form]}
+                value={form[field as keyof DriverUser]}
                 onChange={handleChange}
                 placeholder={
                   field === 'phone'
@@ -121,13 +122,17 @@ export default function DriverSignup() {
             <div className="flex-grow h-px bg-gray-700" />
           </div>
 
-          <button
-            onClick={() => signIn('google')}
-            className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-          >
-            <Image src="/google.svg" alt="Google" width={20} height={20} />
-            Sign Up with Google
-          </button>
+          <SignUpButton mode="modal" redirectUrl="/welcome">
+            <button className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+              <Image
+                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+                alt="Google"
+                width={20}
+                height={20}
+              />
+              Sign Up with Google
+            </button>
+          </SignUpButton>
 
           <p className="text-sm text-center mt-4 text-gray-400">
             Already have an account?{' '}

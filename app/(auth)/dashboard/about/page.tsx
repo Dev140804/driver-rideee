@@ -1,11 +1,16 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { useUser, SignOutButton } from "@clerk/nextjs";
 import Image from 'next/image';
 
 export default function AboutPage() {
+  const { user: clerkUser } = useUser();
+  const router = useRouter();
+
   const [user, setUser] = useState<{
     name?: string;
     email?: string;
@@ -13,23 +18,24 @@ export default function AboutPage() {
     image?: string;
   } | null>(null);
 
-  const router = useRouter();
-  const { data: session } = useSession();
-
   useEffect(() => {
-    if (session?.user) {
-      setUser(session.user); // Google login
+    if (clerkUser) {
+      setUser({
+        name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim(),
+        email: clerkUser.emailAddresses[0]?.emailAddress,
+        phone: clerkUser.phoneNumbers[0]?.phoneNumber || '',
+        image: clerkUser.imageUrl,
+      });
     } else {
       const localUser = localStorage.getItem('driver-user');
       if (localUser) {
-        setUser(JSON.parse(localUser)); // Demo or manual login
+        setUser(JSON.parse(localUser));
       }
     }
-  }, [session]);
+  }, [clerkUser]);
 
-  const handleLogout = async () => {
+  const handleLocalLogout = () => {
     localStorage.removeItem('driver-user');
-    await signOut({ redirect: false });
     router.push('/login');
   };
 
@@ -79,12 +85,20 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg font-semibold transition"
-        >
-          Logout
-        </button>
+        {clerkUser ? (
+          <SignOutButton>
+            <button className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg font-semibold transition">
+              Logout
+            </button>
+          </SignOutButton>
+        ) : (
+          <button
+            onClick={handleLocalLogout}
+            className="w-full bg-red-600 hover:bg-red-700 py-2 rounded-lg font-semibold transition"
+          >
+            Logout
+          </button>
+        )}
       </div>
     </div>
   );

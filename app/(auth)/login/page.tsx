@@ -1,90 +1,72 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { SignInButton, useUser } from '@clerk/nextjs';
+import { useState } from 'react';
+import { SignInButton } from '@clerk/nextjs';
 import Image from 'next/image';
 
-interface DriverUser {
+type DriverUser = {
+  name: string;
+  email: string;
+  phone: string;
   username: string;
   password: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  image?: string;
-}
+};
 
-export default function DriverLogin() {
-  const [form, setForm] = useState({ username: '', password: '' });
+export default function DriverLoginPage() {
   const router = useRouter();
-  const { isSignedIn } = useUser();
-
-  useEffect(() => {
-    if (isSignedIn) {
-      router.push('/welcome');
-    }
-  }, [isSignedIn, router]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleLogin = () => {
-    const localUsers: DriverUser[] = JSON.parse(localStorage.getItem('driver-users') || '[]');
-    const matchedUser = localUsers.find(
-      (user) =>
-        user.username === form.username && user.password === form.password
+    const users = JSON.parse(localStorage.getItem('driver-users') || '[]') as DriverUser[];
+    const matchedUser = users.find(
+      (user) => user.username === username && user.password === password
     );
-
-    const isDemo = form.username === 'driver' && form.password === '1234';
-
-    if (isDemo || matchedUser) {
-      const demoUser = isDemo
-        ? {
-            name: 'Demo Driver',
-            email: 'driver@example.com',
-            phone: '9876543210',
-            image: '',
-          }
-        : matchedUser;
-
-      localStorage.setItem('driver-user', JSON.stringify(demoUser));
-      alert('Login successful!');
-      setTimeout(() => {
-        router.push('/welcome');
-      }, 300);
+    if (matchedUser) {
+      localStorage.setItem('driver-user', JSON.stringify(matchedUser));
+      router.push('/dashboard');
     } else {
-      alert('Invalid credentials');
+      setError('Invalid username or password');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-950 px-4">
-      <div className="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl text-white">
-        <h2 className="text-3xl font-bold text-center mb-6">Driver Sign In</h2>
+    <div className="flex items-center justify-center min-h-screen bg-gray-950 px-4">
+      <div className="w-full max-w-md bg-gray-900 p-8 rounded-xl shadow-lg text-white">
+        <h2 className="text-3xl font-semibold text-center mb-6">Driver Login</h2>
 
         <div className="space-y-4">
           <input
             name="username"
-            value={form.username}
-            onChange={handleChange}
+            type="text"
             placeholder="Username"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setError('');
+            }}
             className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <input
             name="password"
             type="password"
-            value={form.password}
-            onChange={handleChange}
             placeholder="Password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError('');
+            }}
             className="w-full px-4 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+
           <button
             onClick={handleLogin}
             className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition"
           >
-            Sign In
+            Log In
           </button>
 
           <div className="flex items-center gap-2 my-4">
@@ -93,8 +75,9 @@ export default function DriverLogin() {
             <div className="flex-grow h-px bg-gray-700" />
           </div>
 
-          <SignInButton mode="modal" redirectUrl="/welcome" asChild>
-            <button className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+          {/* ✅ Clerk Google Sign-In without `asChild` */}
+          <SignInButton mode="modal">
+            <div className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-100 transition cursor-pointer">
               <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
                 alt="Google"
@@ -102,11 +85,11 @@ export default function DriverLogin() {
                 height={20}
               />
               Sign In with Google
-            </button>
+            </div>
           </SignInButton>
 
           <p className="text-sm text-center mt-4 text-gray-400">
-            Don&rsquo;t have an account?{' '}
+            Don’t have an account?{' '}
             <span
               onClick={() => router.push('/driver-signup')}
               className="text-indigo-400 hover:underline cursor-pointer"

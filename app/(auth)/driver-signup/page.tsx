@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { SignUpButton } from '@clerk/nextjs';
 import Image from 'next/image';
 
@@ -14,6 +14,7 @@ type DriverUser = {
 };
 
 export default function DriverSignup() {
+  const router = useRouter();
   const [form, setForm] = useState<DriverUser>({
     name: '',
     email: '',
@@ -23,7 +24,6 @@ export default function DriverSignup() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -122,7 +122,7 @@ export default function DriverSignup() {
             <div className="flex-grow h-px bg-gray-700" />
           </div>
 
-          <SignUpButton mode="modal" redirectUrl="/welcome">
+          <SignUpButton mode="modal">
             <button className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
               <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"

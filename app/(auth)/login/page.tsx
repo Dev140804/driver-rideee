@@ -3,6 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SignInButton, useUser } from '@clerk/nextjs';
+import Image from 'next/image';
+
+interface DriverUser {
+  username: string;
+  password: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  image?: string;
+}
 
 export default function DriverLogin() {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -13,7 +23,7 @@ export default function DriverLogin() {
     if (isSignedIn) {
       router.push('/welcome');
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -21,9 +31,9 @@ export default function DriverLogin() {
   };
 
   const handleLogin = () => {
-    const localUsers = JSON.parse(localStorage.getItem('driver-users') || '[]');
+    const localUsers: DriverUser[] = JSON.parse(localStorage.getItem('driver-users') || '[]');
     const matchedUser = localUsers.find(
-      (user: any) =>
+      (user) =>
         user.username === form.username && user.password === form.password
     );
 
@@ -85,10 +95,11 @@ export default function DriverLogin() {
 
           <SignInButton mode="modal" redirectUrl="/welcome" asChild>
             <button className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-              <img
+              <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
                 alt="Google"
-                className="w-5 h-5"
+                width={20}
+                height={20}
               />
               Sign In with Google
             </button>
